@@ -1,0 +1,2 @@
+City Order: A -> J -> C -> I -> D -> H -> E -> F -> G -> B -> A
+Total Distance: 3033.86
