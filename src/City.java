@@ -4,6 +4,7 @@ class City
     private boolean isVisited;
     private int x;
     private int y;
+    private String address;
 
     City(String name, boolean isVisited, int x, int y)
     {
@@ -36,5 +37,8 @@ class City
     int getY()
     {
         return y;
+    }
+    String getAddress() {  // ✅ Added missing getAddress() method
+        return address;
     }
 }

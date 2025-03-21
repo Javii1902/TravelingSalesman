@@ -1,105 +1,130 @@
-import java.lang.Math;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
-class Route
-{
+import java.util.Scanner;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+class Route {
+    private static final String API_KEY = System.getenv("gpsKey");
     private double totalDistance = 0;
     private ArrayList<City> visitTracker = new ArrayList<>();
     private City startingCity;
     private City currentCity;
 
-    // Set the starting city of the route
-    Route(City startingCity)
-    {
+    Route(City startingCity) {
         this.startingCity = startingCity;
         this.currentCity = startingCity;
         visitTracker.add(startingCity);
     }
-    
-    //get the shortest distance between a city and its not visited neighbor
-    public void getShortestDis(City current, ArrayList<City> neighbors)
-    {
-        //tempDis will be used to check distances
-        double tempDis;
-        City tempCity = current;
-        double shortestDistance = 0;
 
-        for (City neighbor : neighbors)
-        {
-            if (!current.equals(neighbor) && !neighbor.isVisited() && !startingCity.equals(neighbor))
-            {
-                // get distance between current city and a neighbor that hasn't been visited
-                tempDis = getDistance(current, neighbor);
+    public void getShortestDis(City current, ArrayList<City> neighbors) {
+        double shortestDistance = Double.MAX_VALUE;
+        City closestCity = null;
 
-                // shortest distance has not been set yet
-                if (shortestDistance == 0)
-                {
+        for (City neighbor : neighbors) {
+            if (!neighbor.isVisited() && !neighbor.equals(current)) {
+                double tempDis = getDistance(current.getAddress(), neighbor.getAddress());
+
+                if (tempDis < shortestDistance) {
                     shortestDistance = tempDis;
-                    tempCity = neighbor;
-                }
-                else if (tempDis <= shortestDistance)
-                {
-                    shortestDistance = tempDis;
-                    tempCity = neighbor;
+                    closestCity = neighbor;
                 }
             }
         }
 
-        // All cities have been visited excluding the starting city
-        if (visitTracker.size() == neighbors.size())
-        {
-            startingCity.setVisited(true);
-            currentCity = startingCity;
-            visitTracker.add(startingCity);
-            totalDistance = totalDistance + getDistance(current, startingCity);
-        }
-        else
-        {
-            tempCity.setVisited(true);
-            currentCity = tempCity;
+        if (closestCity != null) {
+            closestCity.setVisited(true);
+            currentCity = closestCity;
             visitTracker.add(currentCity);
-            totalDistance = totalDistance + shortestDistance;
+            totalDistance += shortestDistance;
         }
     }
 
-    public String showVisitedCitiesOrder()
-    {
+    public String showVisitedCitiesOrder() {
         StringBuilder visitedCities = new StringBuilder();
-        int count = 0;
-
-        for (City visitedCity : visitTracker)
-        {
-            count++;
-            visitedCities.append(visitedCity.getName());
-
-            if (count < visitTracker.size())
-            {
+        for (int i = 0; i < visitTracker.size(); i++) {
+            visitedCities.append(visitTracker.get(i).getName());
+            if (i < visitTracker.size() - 1) {
                 visitedCities.append(" -> ");
             }
         }
         System.out.println("City Order: " + visitedCities);
-        return ("City Order: " + visitedCities);
+        return "City Order: " + visitedCities;
     }
 
-    public String showTotalDistance()
-    {
-        System.out.println("Total Distance: " + String.format("%.2f", totalDistance));
-        return ("Total Distance: " + String.format("%.2f", totalDistance));
+    public String showTotalDistance() {
+        System.out.println("Total Distance: " + String.format("%.2f km", totalDistance));
+        return "Total Distance: " + String.format("%.2f km", totalDistance);
     }
 
-    /*
-     Use the getShortestDistance function to find the closest city that has not been visited. if
-     not visited.
-    */
-    City getCurrrentCity()
-    {
+//    public City getCurrentCity() { // ✅ Added missing method
+//        return currentCity;
+//    }
+
+    private double getDistance(String address1, String address2) {
+        try {
+            double[] coord1 = getCoordinates(address1);
+            double[] coord2 = getCoordinates(address2);
+
+            if (coord1 == null || coord2 == null) {
+                return Double.MAX_VALUE;
+            }
+
+            String urlStr = "https://api.openrouteservice.org/v2/directions/driving-car?api_key=" + API_KEY +
+                    "&start=" + coord1[1] + "," + coord1[0] +
+                    "&end=" + coord2[1] + "," + coord2[0];
+
+            String response = fetchAPIResponse(urlStr);
+            JSONObject jsonResponse = new JSONObject(response);
+
+            return jsonResponse.getJSONArray("routes")
+                    .getJSONObject(0)
+                    .getJSONObject("summary")
+                    .getDouble("distance") / 1000.0; // Convert meters to km
+
+        } catch (IOException e) {
+            System.out.println("Error fetching distance: " + e.getMessage());
+            return Double.MAX_VALUE;
+        }
+    }
+
+    private double[] getCoordinates(String address) {
+        try {
+            String urlStr = "https://nominatim.openstreetmap.org/search?q=" + address.replace(" ", "+") +
+                    "&format=json&limit=1";
+
+            String response = fetchAPIResponse(urlStr);
+            JSONArray jsonResponse = new JSONArray(response);
+
+            if (jsonResponse.length() == 0) return null;
+
+            JSONObject location = jsonResponse.getJSONObject(0);
+            return new double[]{location.getDouble("lat"), location.getDouble("lon")};
+
+        } catch (IOException e) {
+            System.out.println("Error fetching coordinates: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String fetchAPIResponse(String urlStr) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+        InputStream responseStream = conn.getInputStream();
+        Scanner scanner = new Scanner(responseStream);
+        String response = scanner.useDelimiter("\\A").next();
+        scanner.close();
+
+        return response;
+    }
+
+    public City getCurrrentCity() {
         return currentCity;
-    }
-
-    //gets the distance between 2 cities
-    private double getDistance(City current, City neighbor)
-    {
-        double x = (neighbor.getX() - current.getX()) * (neighbor.getX() - current.getX());
-        double y = (neighbor.getY() - current.getY()) * (neighbor.getY() - current.getY());
-        return Math.sqrt(Math.abs(x + y));
     }
 }
