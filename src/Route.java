@@ -4,11 +4,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.lang.String;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+
 class Route {
-    private static final String API_KEY = System.getenv("gpsKey");
+    private static final String API_KEY = "5b3ce3597851110001cf6248c7a0f24e79464b1b9caf17128cb6d1a6";//System.getenv("gpsKey");
     private double totalDistance = 0;
     private ArrayList<City> visitTracker = new ArrayList<>();
     private City startingCity;
@@ -56,14 +58,9 @@ class Route {
     }
 
     public String showTotalDistance() {
-        System.out.println("Total Distance: " + String.format("%.2f km", totalDistance));
-        return "Total Distance: " + String.format("%.2f km", totalDistance);
+        System.out.println("Total Distance: " + totalDistance);
+        return "Total Distance: " + totalDistance;
     }
-
-//    public City getCurrentCity() { // ✅ Added missing method
-//        return currentCity;
-//    }
-
     private double getDistance(String address1, String address2) {
         try {
             double[] coord1 = getCoordinates(address1);

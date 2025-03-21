@@ -13,6 +13,11 @@ class City
         this.x = x;
         this.y = y;
     }
+    City(String name, boolean isVisited, String address){
+        this.name = name;
+        this.isVisited = isVisited;
+        this.address = address;
+    }
 
     String getName()
     {
@@ -38,6 +43,7 @@ class City
     {
         return y;
     }
+
     String getAddress() {  // ✅ Added missing getAddress() method
         return address;
     }
