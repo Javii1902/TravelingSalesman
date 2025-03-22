@@ -1,0 +1,8 @@
+Order of addresses to visit:
+5555 Hermann Park Dr, Houston, TX 77030
+6001 Fannin St, Houston, TX 77030
+5555 Hermann Park Dr, Houston, TX 77030
+6200 Hermann Park Dr, Houston, TX 77030
+1500 McKinney St, Houston, TX 77010
+
+Total Distance: 9.55 km
